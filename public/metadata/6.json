@@ -1,0 +1,13 @@
+{
+  "name": "Demetra Zenith #6",
+  "description": "NFT numerato della collezione Demetra Zenith, collegato a una sneaker fisica limited edition.",
+  "image": "/Shoe6.png",
+  "external_url": "http://localhost:3000",
+  "attributes": [
+    { "trait_type": "Model", "value": "Demetra Zenith" },
+    { "trait_type": "Edition", "value": "Genesis Drop" },
+    { "trait_type": "Rarity", "value": "Upper Echo" },
+    { "trait_type": "Utility", "value": "Accesso holder top-tier" },
+    { "trait_type": "Mint Price", "value": "0.01 ETH" }
+  ]
+}

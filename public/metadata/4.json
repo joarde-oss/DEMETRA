@@ -1,0 +1,13 @@
+{
+  "name": "Demetra Nova #4",
+  "description": "NFT numerato della collezione Demetra Nova, collegato a una sneaker fisica limited edition.",
+  "image": "/Shoe4.png",
+  "external_url": "http://localhost:3000",
+  "attributes": [
+    { "trait_type": "Model", "value": "Demetra Nova" },
+    { "trait_type": "Edition", "value": "Genesis Drop" },
+    { "trait_type": "Rarity", "value": "Core Echo" },
+    { "trait_type": "Utility", "value": "Accesso sconto collector" },
+    { "trait_type": "Mint Price", "value": "0.01 ETH" }
+  ]
+}

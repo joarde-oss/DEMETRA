@@ -1,0 +1,13 @@
+{
+  "name": "Demetra Vector #5",
+  "description": "NFT numerato della collezione Demetra Vector, collegato a una sneaker fisica limited edition.",
+  "image": "/Shoe5.png",
+  "external_url": "http://localhost:3000",
+  "attributes": [
+    { "trait_type": "Model", "value": "Demetra Vector" },
+    { "trait_type": "Edition", "value": "Genesis Drop" },
+    { "trait_type": "Rarity", "value": "Shelf Echo" },
+    { "trait_type": "Utility", "value": "Accesso priority member" },
+    { "trait_type": "Mint Price", "value": "0.01 ETH" }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "demetra-nft",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "hardhat": "hardhat",
+    "compile": "hardhat compile",
+    "test": "npm run compile && node --import tsx/esm --test test/*.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.0.7",
+    "@react-three/fiber": "^9.1.2",
+    "@openzeppelin/contracts": "^5.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.177.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "hardhat": "^3.0.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  },
+  "overrides": {
+    "lru-cache": "5.1.1"
+  }
+}

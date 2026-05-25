@@ -1,0 +1,13 @@
+{
+  "name": "Demetra Elevate #2",
+  "description": "NFT numerato della collezione Demetra Elevate, collegato a una sneaker fisica limited edition.",
+  "image": "/Shoe2.png",
+  "external_url": "http://localhost:3000",
+  "attributes": [
+    { "trait_type": "Model", "value": "Demetra Elevate" },
+    { "trait_type": "Edition", "value": "Genesis Drop" },
+    { "trait_type": "Rarity", "value": "High Shelf" },
+    { "trait_type": "Utility", "value": "Priorita sui futuri drop" },
+    { "trait_type": "Mint Price", "value": "0.01 ETH" }
+  ]
+}
