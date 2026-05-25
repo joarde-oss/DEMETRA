@@ -914,9 +914,32 @@ function AnimatedStoreShowroom({
   onSelect: (shoeId: ShoeId) => void;
 }) {
   const groupRef = useRef<Group | null>(null);
+  const [shouldAnimateIntro, setShouldAnimateIntro] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 760px)');
+    const updateMode = () => {
+      setShouldAnimateIntro(!mediaQuery.matches);
+
+      if (groupRef.current) {
+        groupRef.current.scale.setScalar(mediaQuery.matches ? 2.92 : 2.15);
+      }
+    };
+
+    updateMode();
+    mediaQuery.addEventListener('change', updateMode);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateMode);
+    };
+  }, []);
 
   useFrame((_, delta) => {
-    if (!groupRef.current) {
+    if (!groupRef.current || !shouldAnimateIntro) {
       return;
     }
 
@@ -926,7 +949,7 @@ function AnimatedStoreShowroom({
 
   return (
     <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
-      <group ref={groupRef} position={[0, 0.05, 0]} scale={2.15}>
+      <group ref={groupRef} position={[0, 0.05, 0]} scale={2.92}>
         <StoreModel />
         <ShelfShoes
           activeShoeId={activeShoeId}
