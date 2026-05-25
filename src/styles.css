@@ -6,6 +6,11 @@ body,
   margin: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background:
     radial-gradient(circle at top left, rgba(122, 86, 255, 0.18), transparent 24%),
@@ -16,6 +21,7 @@ body {
     linear-gradient(160deg, #fff5ea 0%, #eef1ff 42%, #fffaf4 100%);
   color: #17192a;
   font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  overflow-x: hidden;
 }
 
 button,
