@@ -906,40 +906,19 @@ function AnimatedStoreShowroom({
   activeShoeId,
   onHover,
   onLeave,
-  onSelect
+  onSelect,
+  animated
 }: {
   activeShoeId: ShoeId | null;
   onHover: (shoeId: ShoeId) => void;
   onLeave: () => void;
   onSelect: (shoeId: ShoeId) => void;
+  animated: boolean;
 }) {
   const groupRef = useRef<Group | null>(null);
-  const [shouldAnimateIntro, setShouldAnimateIntro] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 760px)');
-    const updateMode = () => {
-      setShouldAnimateIntro(!mediaQuery.matches);
-
-      if (groupRef.current) {
-        groupRef.current.scale.setScalar(mediaQuery.matches ? 2.92 : 2.15);
-      }
-    };
-
-    updateMode();
-    mediaQuery.addEventListener('change', updateMode);
-
-    return () => {
-      mediaQuery.removeEventListener('change', updateMode);
-    };
-  }, []);
 
   useFrame((_, delta) => {
-    if (!groupRef.current || !shouldAnimateIntro) {
+    if (!groupRef.current || !animated) {
       return;
     }
 
@@ -947,27 +926,52 @@ function AnimatedStoreShowroom({
     groupRef.current.scale.setScalar(nextScale);
   });
 
+  const showroomContent = (
+    <group ref={groupRef} position={[0, 0.05, 0]} scale={animated ? 2.15 : 2.92}>
+      <StoreModel />
+      <ShelfShoes
+        activeShoeId={activeShoeId}
+        onHover={onHover}
+        onLeave={onLeave}
+        onSelect={onSelect}
+      />
+    </group>
+  );
+
+  if (!animated) {
+    return showroomContent;
+  }
+
   return (
     <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
-      <group ref={groupRef} position={[0, 0.05, 0]} scale={2.92}>
-        <StoreModel />
-        <ShelfShoes
-          activeShoeId={activeShoeId}
-          onHover={onHover}
-          onLeave={onLeave}
-          onSelect={onSelect}
-        />
-      </group>
+      {showroomContent}
     </Float>
   );
 }
 
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
 
   useEffect(() => {
     return () => {
       document.body.style.cursor = 'default';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 980px)');
+    const updateViewportMode = () => setIsCompactViewport(mediaQuery.matches);
+
+    updateViewportMode();
+    mediaQuery.addEventListener('change', updateViewportMode);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewportMode);
     };
   }, []);
 
@@ -1013,6 +1017,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
             onHover={setActiveShoeId}
             onLeave={() => setActiveShoeId(null)}
             onSelect={onSelect}
+            animated={!isCompactViewport}
           />
           <ContactShadows
             position={[0, -3.1, 0]}
@@ -1029,7 +1034,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
             maxDistance={7}
             minPolarAngle={Math.PI / 3.2}
             maxPolarAngle={Math.PI / 1.95}
-            autoRotate
+            autoRotate={!isCompactViewport}
             autoRotateSpeed={0.8}
           />
           <Preload all />
