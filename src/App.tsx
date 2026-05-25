@@ -1007,7 +1007,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
 
-        <Canvas camera={{ position: [3.6, 3.8, 4.6], fov: 32 }}>
+        <Canvas camera={isCompactViewport ? { position: [4.6, 4.2, 5.8], fov: 30 } : { position: [3.6, 3.8, 4.6], fov: 32 }}>
           <color attach="background" args={['#090909']} />
           <ambientLight intensity={0.88} />
           <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
@@ -1027,16 +1027,18 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
             far={6}
             color="#382f66"
           />
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            minDistance={4}
-            maxDistance={7}
-            minPolarAngle={Math.PI / 3.2}
-            maxPolarAngle={Math.PI / 1.95}
-            autoRotate={!isCompactViewport}
-            autoRotateSpeed={0.8}
-          />
+          {!isCompactViewport ? (
+            <OrbitControls
+              enablePan={false}
+              enableZoom={false}
+              minDistance={4}
+              maxDistance={7}
+              minPolarAngle={Math.PI / 3.2}
+              maxPolarAngle={Math.PI / 1.95}
+              autoRotate
+              autoRotateSpeed={0.8}
+            />
+          ) : null}
           <Preload all />
         </Canvas>
       </section>
