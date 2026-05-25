@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useEffect, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { Clone, ContactShadows, Float, OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import type { ThreeElements, ThreeEvent } from '@react-three/fiber';
 import { BrowserProvider, Contract, isError, parseEther } from 'ethers';
-import { Group, MathUtils } from 'three';
 
 type ShoeId = 'shoe1' | 'shoe2' | 'shoe3' | 'shoe4' | 'shoe5' | 'shoe6';
 type Page = 'home' | 'store' | 'about' | 'process';
@@ -902,76 +901,12 @@ function ShelfShoes({
   );
 }
 
-function AnimatedStoreShowroom({
-  activeShoeId,
-  onHover,
-  onLeave,
-  onSelect,
-  animated
-}: {
-  activeShoeId: ShoeId | null;
-  onHover: (shoeId: ShoeId) => void;
-  onLeave: () => void;
-  onSelect: (shoeId: ShoeId) => void;
-  animated: boolean;
-}) {
-  const groupRef = useRef<Group | null>(null);
-
-  useFrame((_, delta) => {
-    if (!groupRef.current || !animated) {
-      return;
-    }
-
-    const nextScale = MathUtils.damp(groupRef.current.scale.x, 2.92, 4.4, delta);
-    groupRef.current.scale.setScalar(nextScale);
-  });
-
-  const showroomContent = (
-    <group ref={groupRef} position={[0, 0.05, 0]} scale={animated ? 2.15 : 2.92}>
-      <StoreModel />
-      <ShelfShoes
-        activeShoeId={activeShoeId}
-        onHover={onHover}
-        onLeave={onLeave}
-        onSelect={onSelect}
-      />
-    </group>
-  );
-
-  if (!animated) {
-    return showroomContent;
-  }
-
-  return (
-    <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
-      {showroomContent}
-    </Float>
-  );
-}
-
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
 
   useEffect(() => {
     return () => {
       document.body.style.cursor = 'default';
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(max-width: 980px)');
-    const updateViewportMode = () => setIsCompactViewport(mediaQuery.matches);
-
-    updateViewportMode();
-    mediaQuery.addEventListener('change', updateViewportMode);
-
-    return () => {
-      mediaQuery.removeEventListener('change', updateViewportMode);
     };
   }, []);
 
@@ -1007,18 +942,20 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
 
-        <Canvas camera={isCompactViewport ? { position: [4.6, 4.2, 5.8], fov: 30 } : { position: [3.6, 3.8, 4.6], fov: 32 }}>
+        <Canvas camera={{ position: [4.4, 4.05, 5.55], fov: 30 }}>
           <color attach="background" args={['#090909']} />
           <ambientLight intensity={0.88} />
           <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
           <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
-          <AnimatedStoreShowroom
-            activeShoeId={activeShoeId}
-            onHover={setActiveShoeId}
-            onLeave={() => setActiveShoeId(null)}
-            onSelect={onSelect}
-            animated={!isCompactViewport}
-          />
+          <group position={[0, 0.05, 0]} scale={2.92}>
+            <StoreModel />
+            <ShelfShoes
+              activeShoeId={activeShoeId}
+              onHover={setActiveShoeId}
+              onLeave={() => setActiveShoeId(null)}
+              onSelect={onSelect}
+            />
+          </group>
           <ContactShadows
             position={[0, -3.1, 0]}
             opacity={0.35}
@@ -1027,18 +964,6 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
             far={6}
             color="#382f66"
           />
-          {!isCompactViewport ? (
-            <OrbitControls
-              enablePan={false}
-              enableZoom={false}
-              minDistance={4}
-              maxDistance={7}
-              minPolarAngle={Math.PI / 3.2}
-              maxPolarAngle={Math.PI / 1.95}
-              autoRotate
-              autoRotateSpeed={0.8}
-            />
-          ) : null}
           <Preload all />
         </Canvas>
       </section>
