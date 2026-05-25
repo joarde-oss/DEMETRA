@@ -903,10 +903,33 @@ function ShelfShoes({
 
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
+  const [isPhoneViewport, setIsPhoneViewport] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.matchMedia('(max-width: 980px)').matches;
+  });
 
   useEffect(() => {
     return () => {
       document.body.style.cursor = 'default';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 980px)');
+    const updateViewportMode = () => setIsPhoneViewport(mediaQuery.matches);
+
+    updateViewportMode();
+    mediaQuery.addEventListener('change', updateViewportMode);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewportMode);
     };
   }, []);
 
@@ -942,12 +965,21 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
 
-        <Canvas camera={{ position: [4.4, 4.05, 5.55], fov: 30 }}>
+        <Canvas
+          key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+          camera={
+            isPhoneViewport
+              ? { position: [4.1, 4, 5.25], fov: 30 }
+              : { position: [4.4, 4.05, 5.55], fov: 30 }
+          }
+          dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
+          style={{ width: '100%', height: '100%' }}
+        >
           <color attach="background" args={['#090909']} />
           <ambientLight intensity={0.88} />
           <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
           <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
-          <group position={[0, 0.05, 0]} scale={2.92}>
+          <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
             <StoreModel />
             <ShelfShoes
               activeShoeId={activeShoeId}
@@ -956,6 +988,14 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               onSelect={onSelect}
             />
           </group>
+          <OrbitControls
+            enablePan={false}
+            enableZoom={false}
+            minDistance={4}
+            maxDistance={7}
+            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
+          />
           <ContactShadows
             position={[0, -3.1, 0]}
             opacity={0.35}
@@ -985,6 +1025,13 @@ function ShoeDetail({
   onBack: () => void;
 }) {
   const localizedShoe = getLocalizedShoe(shoe, lang);
+  const [isCompactDetailViewport, setIsCompactDetailViewport] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.matchMedia('(max-width: 980px)').matches;
+  });
   const referenceImageMap: Partial<Record<ShoeId, { src: string; alt: string }>> = {
     shoe1: {
       src: '/Shoe1.png',
@@ -1014,20 +1061,36 @@ function ShoeDetail({
 
   const referenceImage = referenceImageMap[shoe.id];
   const canShowReferenceImage = Boolean(referenceImage);
-  const [showReferenceImage, setShowReferenceImage] = useState(canShowReferenceImage);
+  const [showReferenceImage, setShowReferenceImage] = useState(() => canShowReferenceImage);
   const [buyBusy, setBuyBusy] = useState(false);
   const [buyMessage, setBuyMessage] = useState<string | null>(null);
   const [buyMessageTone, setBuyMessageTone] = useState<'success' | 'error' | null>(null);
-
-  useEffect(() => {
-    setShowReferenceImage(canShowReferenceImage);
-  }, [canShowReferenceImage, shoe.id]);
 
   useEffect(() => {
     setBuyBusy(false);
     setBuyMessage(null);
     setBuyMessageTone(null);
   }, [shoe.id]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 980px)');
+    const updateViewportMode = () => setIsCompactDetailViewport(mediaQuery.matches);
+
+    updateViewportMode();
+    mediaQuery.addEventListener('change', updateViewportMode);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewportMode);
+    };
+  }, []);
+
+  useEffect(() => {
+    setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport : false);
+  }, [canShowReferenceImage, isCompactDetailViewport, shoe.id]);
 
   const handleBuyNft = async () => {
     if (!window.ethereum) {
@@ -1246,16 +1309,27 @@ function ShoeDetail({
             />
           </div>
         ) : (
-          <Canvas camera={{ position: [0, 1.2, 4], fov: 30 }}>
+          <Canvas
+            key={isCompactDetailViewport ? 'detail-mobile' : 'detail-desktop'}
+            camera={
+              isCompactDetailViewport
+                ? { position: [0, 1.25, 5.1], fov: 34 }
+                : { position: [0, 1.2, 4], fov: 30 }
+            }
+          >
             <color attach="background" args={['#090909']} />
             <ambientLight intensity={1} />
             <directionalLight position={[5, 8, 5]} intensity={2} color="#d7c8ff" />
             <directionalLight position={[-4, 5, 2]} intensity={0.8} color="#4b72ff" />
             <Float speed={1.8} rotationIntensity={0.25} floatIntensity={0.22}>
               <group
-                position={shoe.detailPosition}
+                position={
+                  isCompactDetailViewport
+                    ? [shoe.detailPosition[0], shoe.detailPosition[1] + 0.14, shoe.detailPosition[2]]
+                    : shoe.detailPosition
+                }
                 rotation={SHOE_DETAIL_ROTATION}
-                scale={shoe.detailScale}
+                scale={isCompactDetailViewport ? shoe.detailScale * 1.18 : shoe.detailScale}
               >
                 <ShoeModel modelPath={shoe.modelPath} />
               </group>
