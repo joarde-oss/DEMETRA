@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Clone, ContactShadows, Float, OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import type { ThreeElements, ThreeEvent } from '@react-three/fiber';
 import { BrowserProvider, Contract, isError, parseEther } from 'ethers';
+import { MathUtils } from 'three';
 
 type ShoeId = 'shoe1' | 'shoe2' | 'shoe3' | 'shoe4' | 'shoe5' | 'shoe6';
 type Page = 'home' | 'store' | 'about' | 'process';
@@ -901,6 +902,38 @@ function ShelfShoes({
   );
 }
 
+function AnimatedStoreShowroom({
+  activeShoeId,
+  onHover,
+  onLeave,
+  onSelect
+}: {
+  activeShoeId: ShoeId | null;
+  onHover: (shoeId: ShoeId) => void;
+  onLeave: () => void;
+  onSelect: (shoeId: ShoeId) => void;
+}) {
+  const [scale, setScale] = useState(2.15);
+
+  useFrame((_, delta) => {
+    setScale((current) => MathUtils.damp(current, 2.92, 4.4, delta));
+  });
+
+  return (
+    <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
+      <group position={[0, 0.05, 0]} scale={scale}>
+        <StoreModel />
+        <ShelfShoes
+          activeShoeId={activeShoeId}
+          onHover={onHover}
+          onLeave={onLeave}
+          onSelect={onSelect}
+        />
+      </group>
+    </Float>
+  );
+}
+
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
 
@@ -947,17 +980,12 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           <ambientLight intensity={0.88} />
           <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
           <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
-          <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
-            <group position={[0, 0.05, 0]} scale={2.92}>
-              <StoreModel />
-              <ShelfShoes
-                activeShoeId={activeShoeId}
-                onHover={setActiveShoeId}
-                onLeave={() => setActiveShoeId(null)}
-                onSelect={onSelect}
-              />
-            </group>
-          </Float>
+          <AnimatedStoreShowroom
+            activeShoeId={activeShoeId}
+            onHover={setActiveShoeId}
+            onLeave={() => setActiveShoeId(null)}
+            onSelect={onSelect}
+          />
           <ContactShadows
             position={[0, -3.1, 0]}
             opacity={0.35}
