@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Clone, ContactShadows, Float, OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import type { ThreeElements, ThreeEvent } from '@react-three/fiber';
 import { BrowserProvider, Contract, isError, parseEther } from 'ethers';
-import { MathUtils } from 'three';
+import { Group, MathUtils } from 'three';
 
 type ShoeId = 'shoe1' | 'shoe2' | 'shoe3' | 'shoe4' | 'shoe5' | 'shoe6';
 type Page = 'home' | 'store' | 'about' | 'process';
@@ -913,15 +913,20 @@ function AnimatedStoreShowroom({
   onLeave: () => void;
   onSelect: (shoeId: ShoeId) => void;
 }) {
-  const [scale, setScale] = useState(2.15);
+  const groupRef = useRef<Group | null>(null);
 
   useFrame((_, delta) => {
-    setScale((current) => MathUtils.damp(current, 2.92, 4.4, delta));
+    if (!groupRef.current) {
+      return;
+    }
+
+    const nextScale = MathUtils.damp(groupRef.current.scale.x, 2.92, 4.4, delta);
+    groupRef.current.scale.setScalar(nextScale);
   });
 
   return (
     <Float speed={1.4} rotationIntensity={0.15} floatIntensity={0.2}>
-      <group position={[0, 0.05, 0]} scale={scale}>
+      <group ref={groupRef} position={[0, 0.05, 0]} scale={2.15}>
         <StoreModel />
         <ShelfShoes
           activeShoeId={activeShoeId}
@@ -996,6 +1001,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           />
           <OrbitControls
             enablePan={false}
+            enableZoom={false}
             minDistance={4}
             maxDistance={7}
             minPolarAngle={Math.PI / 3.2}
