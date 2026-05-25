@@ -1289,7 +1289,8 @@ a {
 
   .store-scene,
   .detail-viewer {
-    min-height: 58vh;
+    min-height: clamp(28rem, 62svh, 40rem);
+    height: clamp(28rem, 62svh, 40rem);
     margin: 0 1rem 1rem;
   }
 
@@ -2988,7 +2989,8 @@ body {
 
   .store-scene,
   .detail-viewer {
-    min-height: 46vh;
+    min-height: clamp(24rem, 58svh, 30rem);
+    height: clamp(24rem, 58svh, 30rem);
     margin: 0 1rem;
   }
 
