@@ -1175,12 +1175,14 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.1 : 2} color="#d0c5ff" />
           <group position={[0, 0.05, 0]} scale={useLiteStore ? 2.8 : isPhoneViewport ? 3.4 : 2.92}>
             <StoreModel />
-            <ShelfShoes
-              activeShoeId={activeShoeId}
-              onHover={setActiveShoeId}
-              onLeave={() => setActiveShoeId(null)}
-              onSelect={onSelect}
-            />
+            {useLiteStore ? null : (
+              <ShelfShoes
+                activeShoeId={activeShoeId}
+                onHover={setActiveShoeId}
+                onLeave={() => setActiveShoeId(null)}
+                onSelect={onSelect}
+              />
+            )}
           </group>
           {useLiteStore ? null : (
             <OrbitControls
@@ -1205,6 +1207,15 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           )}
           {useLiteStore ? null : <Preload all />}
         </Canvas>
+        {useLiteStore ? (
+          <div className="store-mobile-metamask-actions">
+            {SHOES.map((shoe) => (
+              <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
+                {shoe.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <SiteFooter lang={lang} />
