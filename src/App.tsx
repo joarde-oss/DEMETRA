@@ -1152,10 +1152,10 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               ? { position: [4.45, 4.15, 5.8], fov: 30 }
               : isPhoneViewport
                 ? { position: [4.1, 4, 5.25], fov: 30 }
-                : { position: [4.4, 4.05, 5.55], fov: 30 }
+              : { position: [4.4, 4.05, 5.55], fov: 30 }
           }
           dpr={useLiteStore ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
-          frameloop={useLiteStore ? 'demand' : 'always'}
+          frameloop="always"
           gl={useLiteStore ? { antialias: false, powerPreference: 'low-power' } : undefined}
           style={{ width: '100%', height: '100%' }}
         >
@@ -1175,13 +1175,22 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           <OrbitControls
             enablePan={false}
             enableZoom={false}
-            enableRotate={!useLiteStore || !isPhoneViewport}
+            enableRotate
             minDistance={4}
             maxDistance={7}
             minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
             maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
           />
-          {useLiteStore ? null : (
+          {useLiteStore ? (
+            <ContactShadows
+              position={[0, -3.1, 0]}
+              opacity={0.2}
+              scale={18}
+              blur={1.6}
+              far={4.8}
+              color="#382f66"
+            />
+          ) : (
             <ContactShadows
               position={[0, -3.1, 0]}
               opacity={0.35}
@@ -1191,7 +1200,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               color="#382f66"
             />
           )}
-          {useLiteStore ? null : <Preload all />}
+          <Preload all />
         </Canvas>
       </section>
 
