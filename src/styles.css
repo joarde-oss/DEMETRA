@@ -1298,6 +1298,13 @@ a {
   width: min(10.5rem, calc(100% - 1.8rem));
 }
 
+.store-scene-metamask-mobile {
+  background:
+    linear-gradient(180deg, rgba(9, 9, 9, 0.1), rgba(9, 9, 9, 0.78)),
+    url('/5.png') center center / cover no-repeat,
+    #090909;
+}
+
 @media (max-width: 980px) {
   .site-header {
     flex-wrap: wrap;

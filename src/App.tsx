@@ -1137,7 +1137,10 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         </div>
       </aside>
 
-      <section className="store-scene store-scene-reimagined" aria-label="3D Demetra store">
+      <section
+        className={useLiteStore ? 'store-scene store-scene-reimagined store-scene-metamask-mobile' : 'store-scene store-scene-reimagined'}
+        aria-label="3D Demetra store"
+      >
         <div className="store-overlay">
           <span>{lang === 'it' ? 'Store 3D' : '3D Store'}</span>
           <p>{activeShoe ? (lang === 'it' ? `Apri i dettagli NFT di ${activeShoe.name}` : `Open ${activeShoe.name} NFT details`) : lang === 'it' ? 'Passa sopra una sneaker e clicca per vedere il suo NFT numerato.' : 'Hover a sneaker and click to inspect its numbered NFT.'}</p>
@@ -1149,7 +1152,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           key={useLiteStore ? 'store-metamask-mobile' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
             useLiteStore
-              ? { position: [4.65, 4.25, 6.1], fov: 29 }
+              ? { position: [0, 0.85, 4.9], fov: 28 }
               : isPhoneViewport
                 ? { position: [4.1, 4, 5.25], fov: 30 }
                 : { position: [4.4, 4.05, 5.55], fov: 30 }
@@ -1159,8 +1162,8 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           gl={
             useLiteStore
               ? {
-                  antialias: false,
-                  alpha: false,
+                antialias: false,
+                  alpha: true,
                   powerPreference: 'low-power',
                   stencil: false,
                   depth: true,
@@ -1170,19 +1173,18 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           }
           style={{ width: '100%', height: '100%' }}
         >
-          <color attach="background" args={['#090909']} />
-          <ambientLight intensity={useLiteStore ? 1 : 0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.1 : 2} color="#d0c5ff" />
-          <group position={[0, 0.05, 0]} scale={useLiteStore ? 2.8 : isPhoneViewport ? 3.4 : 2.92}>
-            <StoreModel />
-            {useLiteStore ? null : (
-              <ShelfShoes
-                activeShoeId={activeShoeId}
-                onHover={setActiveShoeId}
-                onLeave={() => setActiveShoeId(null)}
-                onSelect={onSelect}
-              />
-            )}
+          {useLiteStore ? null : <color attach="background" args={['#090909']} />}
+          <ambientLight intensity={useLiteStore ? 1.15 : 0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.35 : 2} color="#d0c5ff" />
+          <directionalLight position={[-6, 8, -3]} intensity={useLiteStore ? 0.72 : 1.1} color="#5b78ff" />
+          <group position={useLiteStore ? [0, -0.02, 0] : [0, 0.05, 0]} scale={useLiteStore ? 1.7 : isPhoneViewport ? 3.4 : 2.92}>
+            {useLiteStore ? null : <StoreModel />}
+            <ShelfShoes
+              activeShoeId={activeShoeId}
+              onHover={setActiveShoeId}
+              onLeave={() => setActiveShoeId(null)}
+              onSelect={onSelect}
+            />
           </group>
           {useLiteStore ? null : (
             <OrbitControls
@@ -1207,15 +1209,6 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           )}
           {useLiteStore ? null : <Preload all />}
         </Canvas>
-        {useLiteStore ? (
-          <div className="store-mobile-metamask-actions">
-            {SHOES.map((shoe) => (
-              <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
-                {shoe.name}
-              </button>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <SiteFooter lang={lang} />
@@ -1301,6 +1294,14 @@ function ShoeDetail({
   useEffect(() => {
     setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport : false);
   }, [canShowReferenceImage, isCompactDetailViewport, shoe.id]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [shoe.id]);
 
   const handleBuyNft = async () => {
     if (!window.ethereum) {
