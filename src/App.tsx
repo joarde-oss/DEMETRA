@@ -284,14 +284,6 @@ function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function isMetaMaskMobileBrowser() {
-  if (typeof navigator === 'undefined') {
-    return false;
-  }
-
-  return /MetaMaskMobile/i.test(navigator.userAgent);
-}
-
 const WALLET_SESSION_KEY = 'demetra.wallet.connected';
 const SEPOLIA_CHAIN_ID = 11155111n;
 const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
@@ -1114,7 +1106,6 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
   }, []);
 
   const activeShoe = activeShoeId ? SHOES.find((shoe) => shoe.id === activeShoeId) ?? null : null;
-  const useLiteStore = isPhoneViewport && isMetaMaskMobileBrowser();
 
   return (
     <main className="store-page">
@@ -1146,76 +1137,48 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
         <Canvas
-          key={useLiteStore ? 'store-metamask-mobile' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+          key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
-            useLiteStore
-              ? { position: [4.65, 4.25, 6.1], fov: 29 }
-              : isPhoneViewport
-                ? { position: [4.1, 4, 5.25], fov: 30 }
-                : { position: [4.4, 4.05, 5.55], fov: 30 }
+            isPhoneViewport
+              ? { position: [4.1, 4, 5.25], fov: 30 }
+              : { position: [4.4, 4.05, 5.55], fov: 30 }
           }
-          dpr={useLiteStore ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
+          dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
           frameloop="always"
-          gl={
-            useLiteStore
-              ? {
-                antialias: false,
-                  alpha: true,
-                  powerPreference: 'low-power',
-                  stencil: false,
-                  depth: true,
-                  preserveDrawingBuffer: false
-                }
-              : undefined
-          }
           style={{ width: '100%', height: '100%' }}
         >
           <color attach="background" args={['#090909']} />
-          <ambientLight intensity={useLiteStore ? 1 : 0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.1 : 2} color="#d0c5ff" />
-          <group position={[0, 0.05, 0]} scale={useLiteStore ? 2.8 : isPhoneViewport ? 3.4 : 2.92}>
+          <ambientLight intensity={0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
+          <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
+          <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
             <StoreModel />
-            {useLiteStore ? null : (
-              <ShelfShoes
-                activeShoeId={activeShoeId}
-                onHover={setActiveShoeId}
-                onLeave={() => setActiveShoeId(null)}
-                onSelect={onSelect}
-              />
-            )}
+            <ShelfShoes
+              activeShoeId={activeShoeId}
+              onHover={setActiveShoeId}
+              onLeave={() => setActiveShoeId(null)}
+              onSelect={onSelect}
+            />
           </group>
-          {useLiteStore ? null : (
-            <OrbitControls
-              enablePan={false}
-              enableZoom={false}
-              enableRotate
-              minDistance={4}
-              maxDistance={7}
-              minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
-              maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
-            />
-          )}
-          {useLiteStore ? null : (
-            <ContactShadows
-              position={[0, -3.1, 0]}
-              opacity={0.35}
-              scale={25}
-              blur={2.5}
-              far={6}
-              color="#382f66"
-            />
-          )}
-          {useLiteStore ? null : <Preload all />}
+          <OrbitControls
+            enablePan={false}
+            enableZoom={false}
+            enableRotate
+            minDistance={4}
+            maxDistance={7}
+            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
+          />
+          <ContactShadows
+            position={[0, -3.1, 0]}
+            opacity={0.35}
+            scale={25}
+            blur={2.5}
+            far={6}
+            color="#382f66"
+          />
+          <Preload all />
         </Canvas>
-        {useLiteStore ? (
-          <div className="store-mobile-metamask-actions">
-            {SHOES.map((shoe) => (
-              <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
-                {shoe.name}
-              </button>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <SiteFooter lang={lang} />
@@ -1235,7 +1198,6 @@ function ShoeDetail({
   onBack: () => void;
 }) {
   const localizedShoe = getLocalizedShoe(shoe, lang);
-  const isMetaMaskMobile = isMetaMaskMobileBrowser();
   const [isCompactDetailViewport, setIsCompactDetailViewport] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -1272,7 +1234,6 @@ function ShoeDetail({
 
   const referenceImage = referenceImageMap[shoe.id];
   const canShowReferenceImage = Boolean(referenceImage);
-  const disableInteractive3D = isCompactDetailViewport && isMetaMaskMobile;
   const [showReferenceImage, setShowReferenceImage] = useState(() => canShowReferenceImage);
   const [buyBusy, setBuyBusy] = useState(false);
   const [buyMessage, setBuyMessage] = useState<string | null>(null);
@@ -1301,8 +1262,8 @@ function ShoeDetail({
   }, []);
 
   useEffect(() => {
-    setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport || disableInteractive3D : false);
-  }, [canShowReferenceImage, isCompactDetailViewport, disableInteractive3D, shoe.id]);
+    setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport : false);
+  }, [canShowReferenceImage, isCompactDetailViewport, shoe.id]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1503,19 +1464,15 @@ function ShoeDetail({
           <span>{lang === 'it' ? 'Vista 360' : 'Interactive 360'}</span>
           <p>
             {showReferenceImage
-              ? disableInteractive3D
-                ? lang === 'it'
-                  ? 'Nel browser MetaMask iPhone mostriamo la scheda immagine per mantenere la pagina stabile.'
-                  : 'In the MetaMask iPhone browser we keep the image sheet visible to preserve stability.'
-                : lang === 'it'
-                  ? 'Scheda di riferimento con i quattro lati della sneaker.'
-                  : 'Reference sheet with the four sides of the sneaker.'
+              ? lang === 'it'
+                ? 'Scheda di riferimento con i quattro lati della sneaker.'
+                : 'Reference sheet with the four sides of the sneaker.'
               : lang === 'it'
                 ? 'Ruota la sneaker e osserva l’intera silhouette digitale.'
                 : 'Rotate the sneaker and inspect the full digital silhouette.'}
           </p>
         </div>
-        {canShowReferenceImage && !disableInteractive3D ? (
+        {canShowReferenceImage ? (
           <button
             type="button"
             className="viewer-toggle-button"
@@ -1531,11 +1488,6 @@ function ShoeDetail({
               alt={referenceImage?.alt}
               className="viewer-reference-image"
             />
-            {disableInteractive3D ? (
-              <div className="viewer-mobile-note">
-                {lang === 'it' ? 'Vista 3D non disponibile nel browser MetaMask iPhone.' : '3D view unavailable in the MetaMask iPhone browser.'}
-              </div>
-            ) : null}
           </div>
         ) : (
           <Canvas
