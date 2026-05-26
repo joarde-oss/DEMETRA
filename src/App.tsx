@@ -1083,7 +1083,6 @@ function ShelfShoes({
 
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
-  const [diagnosticStep, setDiagnosticStep] = useState(1);
   const [isPhoneViewport, setIsPhoneViewport] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -1115,14 +1114,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
   }, []);
 
   const activeShoe = activeShoeId ? SHOES.find((shoe) => shoe.id === activeShoeId) ?? null : null;
-  const useMetaMaskDiagnostic = isPhoneViewport && isMetaMaskMobileBrowser();
-  const showRoom = !useMetaMaskDiagnostic || diagnosticStep >= 3;
-  const showShadows = !useMetaMaskDiagnostic || diagnosticStep >= 4;
-  const showShoes = !useMetaMaskDiagnostic || diagnosticStep >= 5;
-  const showControls = !useMetaMaskDiagnostic || diagnosticStep >= 6;
-  const diagnosticLabels = lang === 'it'
-    ? ['Canvas', 'Luci', 'Room', 'Ombre', 'Scarpe', 'Controlli']
-    : ['Canvas', 'Lights', 'Room', 'Shadows', 'Shoes', 'Controls'];
+  const useMetaMaskSafeStore = isPhoneViewport && isMetaMaskMobileBrowser();
 
   return (
     <main className="store-page">
@@ -1149,10 +1141,10 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         <div className="store-overlay">
           <span>{lang === 'it' ? 'Store 3D' : '3D Store'}</span>
           <p>
-            {useMetaMaskDiagnostic
+            {useMetaMaskSafeStore
               ? lang === 'it'
-                ? `Modalita diagnostica MetaMask iPhone: step ${diagnosticStep}/6.`
-                : `MetaMask iPhone diagnostic mode: step ${diagnosticStep}/6.`
+                ? 'Modalita stabile per MetaMask iPhone: room visibile e accesso diretto alle scarpe.'
+                : 'Stable mode for MetaMask iPhone: room visible with direct access to the shoes.'
               : activeShoe
                 ? (lang === 'it' ? `Apri i dettagli NFT di ${activeShoe.name}` : `Open ${activeShoe.name} NFT details`)
                 : lang === 'it'
@@ -1160,41 +1152,20 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
                   : 'Hover a sneaker and click to inspect its numbered NFT.'}
           </p>
         </div>
-        {useMetaMaskDiagnostic ? (
-          <div className="store-diagnostic-panel">
-            <strong>{lang === 'it' ? 'Test MetaMask iPhone' : 'MetaMask iPhone Test'}</strong>
-            <div className="store-diagnostic-actions">
-              {diagnosticLabels.map((label, index) => {
-                const step = index + 1;
-
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    className={diagnosticStep === step ? 'store-diagnostic-button is-active' : 'store-diagnostic-button'}
-                    onClick={() => setDiagnosticStep(step)}
-                  >
-                    {step}. {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
         <Canvas
-          key={useMetaMaskDiagnostic ? `store-metamask-step-${diagnosticStep}` : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+          key={useMetaMaskSafeStore ? 'store-metamask-safe' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
             isPhoneViewport
               ? { position: [4.1, 4, 5.25], fov: 30 }
               : { position: [4.4, 4.05, 5.55], fov: 30 }
           }
-          dpr={useMetaMaskDiagnostic ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
+          dpr={useMetaMaskSafeStore ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
           frameloop="always"
           gl={
-            useMetaMaskDiagnostic
+            useMetaMaskSafeStore
               ? {
                   antialias: false,
                   alpha: false,
@@ -1207,16 +1178,12 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           style={{ width: '100%', height: '100%' }}
         >
           <color attach="background" args={['#090909']} />
-          <ambientLight intensity={useMetaMaskDiagnostic ? 0.78 : 0.88} />
-          {(!useMetaMaskDiagnostic || diagnosticStep >= 2) ? (
-            <>
-              <directionalLight position={[8, 10, 6]} intensity={useMetaMaskDiagnostic ? 1.1 : 2} color="#d0c5ff" />
-              <directionalLight position={[-6, 8, -3]} intensity={useMetaMaskDiagnostic ? 0.7 : 1.1} color="#5b78ff" />
-            </>
-          ) : null}
+          <ambientLight intensity={useMetaMaskSafeStore ? 0.78 : 0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={useMetaMaskSafeStore ? 1.1 : 2} color="#d0c5ff" />
+          <directionalLight position={[-6, 8, -3]} intensity={useMetaMaskSafeStore ? 0.7 : 1.1} color="#5b78ff" />
           <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
-            {showRoom ? <StoreModel /> : null}
-            {showShoes ? (
+            <StoreModel />
+            {!useMetaMaskSafeStore ? (
               <ShelfShoes
                 activeShoeId={activeShoeId}
                 onHover={setActiveShoeId}
@@ -1225,7 +1192,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               />
             ) : null}
           </group>
-          {showControls ? (
+          {!useMetaMaskSafeStore ? (
             <OrbitControls
               enablePan={false}
               enableZoom={false}
@@ -1236,7 +1203,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
             />
           ) : null}
-          {showShadows ? (
+          {!useMetaMaskSafeStore ? (
             <ContactShadows
               position={[0, -3.1, 0]}
               opacity={0.35}
@@ -1246,8 +1213,17 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               color="#382f66"
             />
           ) : null}
-          {!useMetaMaskDiagnostic ? <Preload all /> : null}
+          {!useMetaMaskSafeStore ? <Preload all /> : null}
         </Canvas>
+        {useMetaMaskSafeStore ? (
+          <div className="store-mobile-metamask-actions">
+            {SHOES.map((shoe) => (
+              <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
+                {shoe.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <SiteFooter lang={lang} />
