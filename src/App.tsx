@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Clone, ContactShadows, Float, OrbitControls, Preload, useGLTF } from '@react-three/drei';
 import type { ThreeElements, ThreeEvent } from '@react-three/fiber';
-import { BrowserProvider, Contract, isError, parseEther } from 'ethers';
+import { BrowserProvider, Contract, Interface, isError, parseEther } from 'ethers';
 
 type ShoeId = 'shoe1' | 'shoe2' | 'shoe3' | 'shoe4' | 'shoe5' | 'shoe6';
 type Page = 'home' | 'store' | 'about' | 'process' | 'my-nfts';
@@ -284,6 +284,14 @@ function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function getTransactionStorageKey(walletAddress: string, shoeId: ShoeId) {
+  return `demetra.tx.${walletAddress.toLowerCase()}.${shoeId}`;
+}
+
+function getEtherscanTransactionUrl(transactionHash: string) {
+  return `https://sepolia.etherscan.io/tx/${transactionHash}`;
+}
+
 function isMetaMaskMobileBrowser() {
   if (typeof navigator === 'undefined') {
     return false;
@@ -298,7 +306,8 @@ const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
 const DEMETRA_COLLECTION_ADDRESS = import.meta.env.VITE_DEMETRA_COLLECTION_ADDRESS?.trim() ?? '';
 const DEMETRA_COLLECTION_ABI = [
   'function buyNFT(uint256 tokenId) payable',
-  'function ownerOf(uint256 tokenId) view returns (address)'
+  'function ownerOf(uint256 tokenId) view returns (address)',
+  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'
 ];
 const SHOE_TOKEN_IDS: Record<ShoeId, bigint> = {
   shoe1: 1n,
@@ -850,6 +859,7 @@ function MyNftPage({
   onEnterStore: () => void;
 }) {
   const [ownedShoeIds, setOwnedShoeIds] = useState<ShoeId[]>([]);
+  const [transactionHashes, setTransactionHashes] = useState<Partial<Record<ShoeId, string>>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -859,6 +869,7 @@ function MyNftPage({
     const loadOwnedNfts = async () => {
       if (!walletAddress || !window.ethereum || !DEMETRA_COLLECTION_ADDRESS) {
         setOwnedShoeIds([]);
+        setTransactionHashes({});
         setLoading(false);
         return;
       }
@@ -883,13 +894,52 @@ function MyNftPage({
           return;
         }
 
-        setOwnedShoeIds(ownedEntries.filter((shoeId): shoeId is ShoeId => shoeId !== null));
+        const nextOwnedShoeIds = ownedEntries.filter((shoeId): shoeId is ShoeId => shoeId !== null);
+        setOwnedShoeIds(nextOwnedShoeIds);
+
+        const nextHashes: Partial<Record<ShoeId, string>> = {};
+        const transferInterface = new Interface(['event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)']);
+
+        await Promise.all(
+          nextOwnedShoeIds.map(async (shoeId) => {
+            const storedHash = window.localStorage.getItem(getTransactionStorageKey(walletAddress, shoeId));
+
+            if (storedHash) {
+              nextHashes[shoeId] = storedHash;
+              return;
+            }
+
+            try {
+              const topics = transferInterface.encodeFilterTopics('Transfer', [null, walletAddress, SHOE_TOKEN_IDS[shoeId]]);
+              const logs = await provider.getLogs({
+                address: DEMETRA_COLLECTION_ADDRESS,
+                topics,
+                fromBlock: 0,
+                toBlock: 'latest'
+              });
+              const latestLog = logs[logs.length - 1];
+
+              if (latestLog?.transactionHash) {
+                nextHashes[shoeId] = latestLog.transactionHash;
+              }
+            } catch (lookupError) {
+              console.error(`Failed to lookup transaction hash for ${shoeId}`, lookupError);
+            }
+          })
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setTransactionHashes(nextHashes);
       } catch (loadError) {
         if (cancelled) {
           return;
         }
 
         console.error('Failed to load owned NFTs', loadError);
+        setTransactionHashes({});
         setError(
           lang === 'it'
             ? 'Non è stato possibile leggere gli NFT posseduti.'
@@ -970,6 +1020,16 @@ function MyNftPage({
                     <button type="button" className="hero-outline-button" onClick={() => onOpenShoe(shoe.id)}>
                       {lang === 'it' ? 'Apri NFT' : 'Open NFT'}
                     </button>
+                    {transactionHashes[shoe.id] ? (
+                      <a
+                        href={getEtherscanTransactionUrl(transactionHashes[shoe.id] as string)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hero-outline-button"
+                      >
+                        {lang === 'it' ? 'Vedi Transazione' : 'View Transaction'}
+                      </a>
+                    ) : null}
                     <button type="button" className="hero-outline-button my-nft-coming-soon" disabled>
                       {lang === 'it' ? 'Richiedi Scarpa · Coming Soon' : 'Claim Shoe · Coming Soon'}
                     </button>
@@ -1399,6 +1459,9 @@ function ShoeDetail({
 
       setBuyMessage(lang === 'it' ? 'Transazione inviata. Attendo conferma...' : 'Transaction sent. Waiting for confirmation...');
       await tx.wait();
+
+      const signerAddress = await signer.getAddress();
+      window.localStorage.setItem(getTransactionStorageKey(signerAddress, shoe.id), tx.hash);
 
       setBuyMessageTone('success');
       setBuyMessage(
