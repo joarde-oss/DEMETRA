@@ -55,7 +55,7 @@ body,
   }
 
   .home-hero-floating-title {
-    top: 1.55rem !important;
+    top: 2.15rem !important;
     font-size: clamp(2rem, 3.5vw, 3.1rem) !important;
     line-height: 0.98 !important;
     letter-spacing: 0.06em !important;
