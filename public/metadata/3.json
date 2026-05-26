@@ -1,8 +1,8 @@
 {
   "name": "Demetra Apex #3",
   "description": "NFT numerato della collezione Demetra Apex, collegato a una sneaker fisica limited edition.",
-  "image": "/Shoe3.png",
-  "external_url": "http://localhost:3000",
+  "image": "https://demetra-one.vercel.app/Shoe3.png",
+  "external_url": "https://demetra-one.vercel.app/",
   "attributes": [
     { "trait_type": "Model", "value": "Demetra Apex" },
     { "trait_type": "Edition", "value": "Genesis Drop" },

@@ -1,8 +1,8 @@
 {
   "name": "Demetra Nova #4",
   "description": "NFT numerato della collezione Demetra Nova, collegato a una sneaker fisica limited edition.",
-  "image": "/Shoe4.png",
-  "external_url": "http://localhost:3000",
+  "image": "https://demetra-one.vercel.app/Shoe4.png",
+  "external_url": "https://demetra-one.vercel.app/",
   "attributes": [
     { "trait_type": "Model", "value": "Demetra Nova" },
     { "trait_type": "Edition", "value": "Genesis Drop" },
