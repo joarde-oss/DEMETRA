@@ -1137,10 +1137,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
         </div>
       </aside>
 
-      <section
-        className={useLiteStore ? 'store-scene store-scene-reimagined store-scene-metamask-mobile' : 'store-scene store-scene-reimagined'}
-        aria-label="3D Demetra store"
-      >
+      <section className="store-scene store-scene-reimagined" aria-label="3D Demetra store">
         <div className="store-overlay">
           <span>{lang === 'it' ? 'Store 3D' : '3D Store'}</span>
           <p>{activeShoe ? (lang === 'it' ? `Apri i dettagli NFT di ${activeShoe.name}` : `Open ${activeShoe.name} NFT details`) : lang === 'it' ? 'Passa sopra una sneaker e clicca per vedere il suo NFT numerato.' : 'Hover a sneaker and click to inspect its numbered NFT.'}</p>
@@ -1152,7 +1149,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           key={useLiteStore ? 'store-metamask-mobile' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
             useLiteStore
-              ? { position: [0, 0.85, 4.9], fov: 28 }
+              ? { position: [4.65, 4.25, 6.1], fov: 29 }
               : isPhoneViewport
                 ? { position: [4.1, 4, 5.25], fov: 30 }
                 : { position: [4.4, 4.05, 5.55], fov: 30 }
@@ -1173,12 +1170,11 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           }
           style={{ width: '100%', height: '100%' }}
         >
-          {useLiteStore ? null : <color attach="background" args={['#090909']} />}
-          <ambientLight intensity={useLiteStore ? 1.15 : 0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.35 : 2} color="#d0c5ff" />
-          <directionalLight position={[-6, 8, -3]} intensity={useLiteStore ? 0.72 : 1.1} color="#5b78ff" />
-          <group position={useLiteStore ? [0, -0.02, 0] : [0, 0.05, 0]} scale={useLiteStore ? 1.7 : isPhoneViewport ? 3.4 : 2.92}>
-            {useLiteStore ? null : <StoreModel />}
+          <color attach="background" args={['#090909']} />
+          <ambientLight intensity={useLiteStore ? 1 : 0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.1 : 2} color="#d0c5ff" />
+          <group position={[0, 0.05, 0]} scale={useLiteStore ? 2.8 : isPhoneViewport ? 3.4 : 2.92}>
+            <StoreModel />
             <ShelfShoes
               activeShoeId={activeShoeId}
               onHover={setActiveShoeId}
