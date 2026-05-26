@@ -3787,24 +3787,13 @@ body {
 @media (max-width: 980px) {
   .home-hero {
     min-height: auto !important;
-    margin-bottom: 0.9rem !important;
+    margin-bottom: 1.1rem !important;
   }
 
   .home-hero-stage {
     min-height: 19.5rem !important;
     height: 19.5rem !important;
     overflow: hidden !important;
-  }
-
-  .home-hero::after {
-    content: "";
-    display: block;
-    width: calc(100% - 2rem);
-    max-width: 22rem;
-    height: 1px;
-    margin: 0.9rem auto 0;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 231, 204, 0.42), rgba(255, 255, 255, 0));
-    box-shadow: 0 0 18px rgba(255, 220, 186, 0.12);
   }
 
   .home-hero-image {
