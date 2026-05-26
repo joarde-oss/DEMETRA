@@ -5,13 +5,14 @@ import type { ThreeElements, ThreeEvent } from '@react-three/fiber';
 import { BrowserProvider, Contract, isError, parseEther } from 'ethers';
 
 type ShoeId = 'shoe1' | 'shoe2' | 'shoe3' | 'shoe4' | 'shoe5' | 'shoe6';
-type Page = 'home' | 'store' | 'about' | 'process';
+type Page = 'home' | 'store' | 'about' | 'process' | 'my-nfts';
 type Lang = 'it' | 'en';
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
   on: (event: 'accountsChanged' | 'chainChanged', listener: (...args: unknown[]) => void) => void;
   removeListener: (event: 'accountsChanged' | 'chainChanged', listener: (...args: unknown[]) => void) => void;
+  isMetaMask?: boolean;
 };
 
 declare global {
@@ -283,6 +284,14 @@ function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function isMetaMaskMobileBrowser() {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  return /MetaMaskMobile/i.test(navigator.userAgent);
+}
+
 const WALLET_SESSION_KEY = 'demetra.wallet.connected';
 const SEPOLIA_CHAIN_ID = 11155111n;
 const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
@@ -342,7 +351,12 @@ function AppHeader({
   onWalletClick: () => void;
   onToggleLanguage: () => void;
 }) {
-  const isDarkHeader = currentPage === 'home' || currentPage === 'store' || currentPage === 'about' || currentPage === 'process';
+  const isDarkHeader =
+    currentPage === 'home' ||
+    currentPage === 'store' ||
+    currentPage === 'about' ||
+    currentPage === 'process' ||
+    currentPage === 'my-nfts';
 
   return (
     <header
@@ -426,6 +440,23 @@ function AppHeader({
         >
           {lang === 'it' ? 'Store' : 'Store'}
         </button>
+        {walletAddress ? (
+          <button
+            type="button"
+            className={currentPage === 'my-nfts' ? 'nav-link is-active' : 'nav-link'}
+            onClick={() => onNavigate('my-nfts')}
+            style={
+              isDarkHeader
+                ? {
+                    color: '#f3efe9',
+                    background: currentPage === 'my-nfts' ? 'rgba(255, 255, 255, 0.08)' : 'transparent'
+                  }
+                : undefined
+            }
+          >
+            {lang === 'it' ? 'My NFT' : 'My NFT'}
+          </button>
+        ) : null}
       </nav>
 
       <div className="header-actions">
@@ -507,6 +538,7 @@ function HomePage({
         </div>
 
         <div className="home-hero-stage">
+          <h1 className="home-hero-floating-title">FUTURE IS OUR DESIGN</h1>
           <div className="home-pedestal" />
           <img
             className="home-hero-image"
@@ -806,6 +838,154 @@ function AboutPage({ lang }: { lang: Lang }) {
   );
 }
 
+function MyNftPage({
+  lang,
+  walletAddress,
+  onOpenShoe,
+  onEnterStore
+}: {
+  lang: Lang;
+  walletAddress: string | null;
+  onOpenShoe: (shoeId: ShoeId) => void;
+  onEnterStore: () => void;
+}) {
+  const [ownedShoeIds, setOwnedShoeIds] = useState<ShoeId[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOwnedNfts = async () => {
+      if (!walletAddress || !window.ethereum || !DEMETRA_COLLECTION_ADDRESS) {
+        setOwnedShoeIds([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const provider = new BrowserProvider(window.ethereum);
+        const contract = new Contract(DEMETRA_COLLECTION_ADDRESS, DEMETRA_COLLECTION_ABI, provider);
+        const ownedEntries = await Promise.all(
+          SHOES.map(async (shoe) => {
+            try {
+              const owner = (await contract.ownerOf(SHOE_TOKEN_IDS[shoe.id])) as string;
+              return owner.toLowerCase() === walletAddress.toLowerCase() ? shoe.id : null;
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setOwnedShoeIds(ownedEntries.filter((shoeId): shoeId is ShoeId => shoeId !== null));
+      } catch (loadError) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error('Failed to load owned NFTs', loadError);
+        setError(
+          lang === 'it'
+            ? 'Non è stato possibile leggere gli NFT posseduti.'
+            : 'Unable to read the owned NFTs.'
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadOwnedNfts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lang, walletAddress]);
+
+  const ownedShoes = SHOES.filter((shoe) => ownedShoeIds.includes(shoe.id));
+
+  return (
+    <main className="my-nfts-page">
+      <section className="my-nfts-hero">
+        <p className="section-kicker">{lang === 'it' ? 'Wallet / My NFT' : 'Wallet / My NFT'}</p>
+        <h1>{lang === 'it' ? 'I tuoi NFT Demetra.' : 'Your Demetra NFTs.'}</h1>
+        <p>
+          {walletAddress
+            ? lang === 'it'
+              ? `Wallet connesso: ${shortenAddress(walletAddress)}`
+              : `Connected wallet: ${shortenAddress(walletAddress)}`
+            : lang === 'it'
+              ? 'Connetti il wallet per vedere gli NFT acquistati.'
+              : 'Connect your wallet to see the purchased NFTs.'}
+        </p>
+      </section>
+
+      {loading ? (
+        <section className="my-nfts-empty">
+          <strong>{lang === 'it' ? 'Caricamento NFT in corso...' : 'Loading NFTs...'}</strong>
+        </section>
+      ) : error ? (
+        <section className="my-nfts-empty">
+          <strong>{error}</strong>
+        </section>
+      ) : ownedShoes.length === 0 ? (
+        <section className="my-nfts-empty">
+          <strong>{lang === 'it' ? 'Nessun NFT Demetra trovato in questo wallet.' : 'No Demetra NFTs found for this wallet.'}</strong>
+          <p>
+            {lang === 'it'
+              ? 'Acquista una sneaker dallo store per vederla comparire qui.'
+              : 'Buy a sneaker from the store to see it appear here.'}
+          </p>
+          <button type="button" className="hero-outline-button" onClick={onEnterStore}>
+            {lang === 'it' ? 'Vai allo Store' : 'Go to Store'}
+          </button>
+        </section>
+      ) : (
+        <section className="my-nfts-grid">
+          {ownedShoes.map((shoe) => {
+            const localizedShoe = getLocalizedShoe(shoe, lang);
+
+            return (
+              <article key={shoe.id} className="my-nft-card">
+                <div className="my-nft-image-wrap">
+                  <img src={`/${shoe.modelPath.replace('.glb', '.png').replace('/S', 'S')}`} alt={localizedShoe.name} className="my-nft-image" />
+                </div>
+                <div className="my-nft-copy">
+                  <p className="detail-kicker">{shoe.serial}</p>
+                  <h2 className={shoe.id === 'shoe2' ? 'my-nft-title is-inline' : 'my-nft-title'}>{localizedShoe.name}</h2>
+                  <p>{localizedShoe.description}</p>
+                  <div className="my-nft-meta">
+                    <span>{localizedShoe.edition}</span>
+                    <span>{localizedShoe.rarity}</span>
+                    <span>{localizedShoe.price}</span>
+                  </div>
+                  <div className="my-nft-actions">
+                    <button type="button" className="hero-outline-button" onClick={() => onOpenShoe(shoe.id)}>
+                      {lang === 'it' ? 'Apri NFT' : 'Open NFT'}
+                    </button>
+                    <button type="button" className="hero-outline-button my-nft-coming-soon" disabled>
+                      {lang === 'it' ? 'Richiedi Scarpa · Coming Soon' : 'Claim Shoe · Coming Soon'}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      )}
+
+      <SiteFooter lang={lang} />
+    </main>
+  );
+}
+
 function InteractiveShoe({
   shoe,
   active,
@@ -934,6 +1114,7 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
   }, []);
 
   const activeShoe = activeShoeId ? SHOES.find((shoe) => shoe.id === activeShoeId) ?? null : null;
+  const useLiteStore = isPhoneViewport && isMetaMaskMobileBrowser();
 
   return (
     <main className="store-page">
@@ -964,48 +1145,65 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
-
-        <Canvas
-          key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
-          camera={
-            isPhoneViewport
-              ? { position: [4.1, 4, 5.25], fov: 30 }
-              : { position: [4.4, 4.05, 5.55], fov: 30 }
-          }
-          dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <color attach="background" args={['#090909']} />
-          <ambientLight intensity={0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
-          <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
-          <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
-            <StoreModel />
-            <ShelfShoes
-              activeShoeId={activeShoeId}
-              onHover={setActiveShoeId}
-              onLeave={() => setActiveShoeId(null)}
-              onSelect={onSelect}
+        {useLiteStore ? (
+          <div className="store-mobile-fallback">
+            <img src="/5.png" alt="Demetra mobile store preview" className="store-mobile-fallback-image" />
+            <p className="store-mobile-fallback-note">
+              {lang === 'it'
+                ? 'Browser MetaMask iPhone: store alleggerito per mantenere apertura pagina e acquisto NFT stabili.'
+                : 'MetaMask iPhone browser: lighter store mode to keep page loading and NFT purchases stable.'}
+            </p>
+            <div className="store-mobile-fallback-grid">
+              {SHOES.map((shoe) => (
+                <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
+                  {shoe.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Canvas
+            key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+            camera={
+              isPhoneViewport
+                ? { position: [4.1, 4, 5.25], fov: 30 }
+                : { position: [4.4, 4.05, 5.55], fov: 30 }
+            }
+            dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <color attach="background" args={['#090909']} />
+            <ambientLight intensity={0.88} />
+            <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
+            <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
+            <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
+              <StoreModel />
+              <ShelfShoes
+                activeShoeId={activeShoeId}
+                onHover={setActiveShoeId}
+                onLeave={() => setActiveShoeId(null)}
+                onSelect={onSelect}
+              />
+            </group>
+            <OrbitControls
+              enablePan={false}
+              enableZoom={false}
+              minDistance={4}
+              maxDistance={7}
+              minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+              maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
             />
-          </group>
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            minDistance={4}
-            maxDistance={7}
-            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
-            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
-          />
-          <ContactShadows
-            position={[0, -3.1, 0]}
-            opacity={0.35}
-            scale={25}
-            blur={2.5}
-            far={6}
-            color="#382f66"
-          />
-          <Preload all />
-        </Canvas>
+            <ContactShadows
+              position={[0, -3.1, 0]}
+              opacity={0.35}
+              scale={25}
+              blur={2.5}
+              far={6}
+              color="#382f66"
+            />
+            <Preload all />
+          </Canvas>
+        )}
       </section>
 
       <SiteFooter lang={lang} />
@@ -1366,12 +1564,83 @@ export default function App() {
   const [walletBusy, setWalletBusy] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
   const [walletReady, setWalletReady] = useState(false);
+  const [ethereumProvider, setEthereumProvider] = useState<EthereumProvider | null>(() =>
+    typeof window === 'undefined' ? null : window.ethereum ?? null
+  );
+  const [providerResolved, setProviderResolved] = useState(() => typeof window === 'undefined');
 
   const selectedShoe = selectedShoeId ? SHOES.find((shoe) => shoe.id === selectedShoeId) ?? null : null;
   const walletConnected = Boolean(walletAddress);
 
   useEffect(() => {
-    const provider = window.ethereum;
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId = 0;
+    let intervalId = 0;
+
+    const resolveProvider = () => {
+      const nextProvider = window.ethereum ?? null;
+
+      if (!nextProvider) {
+        return false;
+      }
+
+      setEthereumProvider(nextProvider);
+      setProviderResolved(true);
+      return true;
+    };
+
+    if (resolveProvider()) {
+      return;
+    }
+
+    const handleEthereumInitialized = () => {
+      if (cancelled) {
+        return;
+      }
+
+      if (resolveProvider()) {
+        window.clearInterval(intervalId);
+        window.clearTimeout(timeoutId);
+      }
+    };
+
+    window.addEventListener('ethereum#initialized', handleEthereumInitialized, { once: true });
+
+    intervalId = window.setInterval(() => {
+      if (resolveProvider()) {
+        window.clearInterval(intervalId);
+        window.clearTimeout(timeoutId);
+      }
+    }, 250);
+
+    timeoutId = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setEthereumProvider(window.ethereum ?? null);
+      setProviderResolved(true);
+      window.clearInterval(intervalId);
+    }, 3200);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
+      window.removeEventListener('ethereum#initialized', handleEthereumInitialized);
+    };
+  }, []);
+
+  useEffect(() => {
+    const provider = ethereumProvider;
+
+    if (!providerResolved) {
+      return;
+    }
 
     if (!provider) {
       setWalletReady(true);
@@ -1419,10 +1688,16 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [ethereumProvider, providerResolved]);
 
   useEffect(() => {
-    const provider = window.ethereum;
+    if (!walletConnected && currentPage === 'my-nfts') {
+      setCurrentPage('home');
+    }
+  }, [currentPage, walletConnected]);
+
+  useEffect(() => {
+    const provider = ethereumProvider;
 
     if (!provider) {
       return;
@@ -1453,10 +1728,10 @@ export default function App() {
       provider.removeListener('accountsChanged', handleAccountsChanged);
       provider.removeListener('chainChanged', handleChainChanged);
     };
-  }, []);
+  }, [ethereumProvider]);
 
   const handleWalletClick = async () => {
-    const provider = window.ethereum;
+    const provider = ethereumProvider ?? window.ethereum ?? null;
 
     if (walletConnected) {
       try {
@@ -1556,6 +1831,13 @@ export default function App() {
         <AboutPage lang={lang} />
       ) : currentPage === 'process' ? (
         <ProcessPage lang={lang} onEnterStore={() => handleNavigate('store')} />
+      ) : currentPage === 'my-nfts' ? (
+        <MyNftPage
+          lang={lang}
+          walletAddress={walletAddress}
+          onOpenShoe={handleOpenShoe}
+          onEnterStore={() => handleNavigate('store')}
+        />
       ) : (
         <StorePage lang={lang} onSelect={handleOpenShoe} />
       )}
