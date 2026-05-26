@@ -1149,48 +1149,53 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
           key={useLiteStore ? 'store-metamask-mobile' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
             useLiteStore
-              ? { position: [4.45, 4.15, 5.8], fov: 30 }
+              ? { position: [4.65, 4.25, 6.1], fov: 29 }
               : isPhoneViewport
                 ? { position: [4.1, 4, 5.25], fov: 30 }
-              : { position: [4.4, 4.05, 5.55], fov: 30 }
+                : { position: [4.4, 4.05, 5.55], fov: 30 }
           }
           dpr={useLiteStore ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
           frameloop="always"
-          gl={useLiteStore ? { antialias: false, powerPreference: 'low-power' } : undefined}
+          gl={
+            useLiteStore
+              ? {
+                  antialias: false,
+                  alpha: false,
+                  powerPreference: 'low-power',
+                  stencil: false,
+                  depth: true,
+                  preserveDrawingBuffer: false
+                }
+              : undefined
+          }
           style={{ width: '100%', height: '100%' }}
         >
           <color attach="background" args={['#090909']} />
-          <ambientLight intensity={useLiteStore ? 0.8 : 0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.5 : 2} color="#d0c5ff" />
-          <directionalLight position={[-6, 8, -3]} intensity={useLiteStore ? 0.8 : 1.1} color="#5b78ff" />
-          <group position={[0, 0.05, 0]} scale={useLiteStore ? 3.05 : isPhoneViewport ? 3.4 : 2.92}>
+          <ambientLight intensity={useLiteStore ? 1 : 0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.1 : 2} color="#d0c5ff" />
+          <group position={[0, 0.05, 0]} scale={useLiteStore ? 2.8 : isPhoneViewport ? 3.4 : 2.92}>
             <StoreModel />
-            <ShelfShoes
-              activeShoeId={activeShoeId}
-              onHover={setActiveShoeId}
-              onLeave={() => setActiveShoeId(null)}
-              onSelect={onSelect}
-            />
+            {useLiteStore ? null : (
+              <ShelfShoes
+                activeShoeId={activeShoeId}
+                onHover={setActiveShoeId}
+                onLeave={() => setActiveShoeId(null)}
+                onSelect={onSelect}
+              />
+            )}
           </group>
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            enableRotate
-            minDistance={4}
-            maxDistance={7}
-            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
-            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
-          />
-          {useLiteStore ? (
-            <ContactShadows
-              position={[0, -3.1, 0]}
-              opacity={0.2}
-              scale={18}
-              blur={1.6}
-              far={4.8}
-              color="#382f66"
+          {useLiteStore ? null : (
+            <OrbitControls
+              enablePan={false}
+              enableZoom={false}
+              enableRotate
+              minDistance={4}
+              maxDistance={7}
+              minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+              maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
             />
-          ) : (
+          )}
+          {useLiteStore ? null : (
             <ContactShadows
               position={[0, -3.1, 0]}
               opacity={0.35}
@@ -1200,8 +1205,17 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               color="#382f66"
             />
           )}
-          <Preload all />
+          {useLiteStore ? null : <Preload all />}
         </Canvas>
+        {useLiteStore ? (
+          <div className="store-mobile-metamask-actions">
+            {SHOES.map((shoe) => (
+              <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
+                {shoe.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <SiteFooter lang={lang} />

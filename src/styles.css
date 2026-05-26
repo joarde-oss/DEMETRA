@@ -1288,6 +1288,16 @@ a {
   border-color: rgba(255, 255, 255, 0.24);
 }
 
+.store-mobile-metamask-actions {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 3;
+  display: grid;
+  gap: 0.42rem;
+  width: min(10.5rem, calc(100% - 1.8rem));
+}
+
 @media (max-width: 980px) {
   .site-header {
     flex-wrap: wrap;
@@ -3172,6 +3182,12 @@ body {
 
   .store-mobile-fallback-grid {
     grid-template-columns: 1fr;
+  }
+
+  .store-mobile-metamask-actions {
+    right: 0.7rem;
+    bottom: 0.7rem;
+    width: min(9.6rem, calc(100% - 1.4rem));
   }
 
   .store-overlay,
