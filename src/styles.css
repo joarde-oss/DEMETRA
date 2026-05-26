@@ -6,7 +6,7 @@ body,
   margin: 0;
 }
 
-@media (min-width: 821px) and (max-width: 980px) {
+@media (min-width: 821px) and (max-width: 1220px) {
   .home-hero {
     min-height: 66vh !important;
     margin-bottom: 0.8rem !important;
