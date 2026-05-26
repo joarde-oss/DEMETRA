@@ -3289,15 +3289,15 @@ body {
   }
 
   .detail-page .viewer-toggle-button {
-    top: 0.8rem;
+    top: 4.35rem;
     right: 0.8rem;
     bottom: auto;
-    padding: 0.58rem 0.72rem;
+    padding: 0.52rem 0.72rem;
     font-size: 0.68rem;
   }
 
   .detail-page .viewer-image-wrap {
-    padding: 4.4rem 0.9rem 1rem;
+    padding: 5.1rem 0.9rem 1rem;
   }
 
   .detail-page .viewer-reference-image {
