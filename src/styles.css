@@ -1290,12 +1290,15 @@ a {
 
 .store-mobile-metamask-actions {
   position: absolute;
-  right: 0.9rem;
+  left: 50%;
   bottom: 0.9rem;
   z-index: 3;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.42rem;
-  width: min(10.5rem, calc(100% - 1.8rem));
+  width: min(20rem, calc(100% - 1.8rem));
+  transform: translateX(-50%);
 }
 
 
@@ -3186,9 +3189,9 @@ body {
   }
 
   .store-mobile-metamask-actions {
-    right: 0.7rem;
+    left: 50%;
     bottom: 0.7rem;
-    width: min(9.6rem, calc(100% - 1.4rem));
+    width: min(18.5rem, calc(100% - 1.4rem));
   }
 
   .store-overlay,

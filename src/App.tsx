@@ -1235,6 +1235,7 @@ function ShoeDetail({
   onBack: () => void;
 }) {
   const localizedShoe = getLocalizedShoe(shoe, lang);
+  const isMetaMaskMobile = isMetaMaskMobileBrowser();
   const [isCompactDetailViewport, setIsCompactDetailViewport] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -1271,6 +1272,7 @@ function ShoeDetail({
 
   const referenceImage = referenceImageMap[shoe.id];
   const canShowReferenceImage = Boolean(referenceImage);
+  const disableInteractive3D = isCompactDetailViewport && isMetaMaskMobile;
   const [showReferenceImage, setShowReferenceImage] = useState(() => canShowReferenceImage);
   const [buyBusy, setBuyBusy] = useState(false);
   const [buyMessage, setBuyMessage] = useState<string | null>(null);
@@ -1299,8 +1301,8 @@ function ShoeDetail({
   }, []);
 
   useEffect(() => {
-    setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport : false);
-  }, [canShowReferenceImage, isCompactDetailViewport, shoe.id]);
+    setShowReferenceImage(canShowReferenceImage ? isCompactDetailViewport || disableInteractive3D : false);
+  }, [canShowReferenceImage, isCompactDetailViewport, disableInteractive3D, shoe.id]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1501,15 +1503,19 @@ function ShoeDetail({
           <span>{lang === 'it' ? 'Vista 360' : 'Interactive 360'}</span>
           <p>
             {showReferenceImage
-              ? lang === 'it'
-                ? 'Scheda di riferimento con i quattro lati della sneaker.'
-                : 'Reference sheet with the four sides of the sneaker.'
+              ? disableInteractive3D
+                ? lang === 'it'
+                  ? 'Nel browser MetaMask iPhone mostriamo la scheda immagine per mantenere la pagina stabile.'
+                  : 'In the MetaMask iPhone browser we keep the image sheet visible to preserve stability.'
+                : lang === 'it'
+                  ? 'Scheda di riferimento con i quattro lati della sneaker.'
+                  : 'Reference sheet with the four sides of the sneaker.'
               : lang === 'it'
                 ? 'Ruota la sneaker e osserva l’intera silhouette digitale.'
                 : 'Rotate the sneaker and inspect the full digital silhouette.'}
           </p>
         </div>
-        {canShowReferenceImage ? (
+        {canShowReferenceImage && !disableInteractive3D ? (
           <button
             type="button"
             className="viewer-toggle-button"
@@ -1525,6 +1531,11 @@ function ShoeDetail({
               alt={referenceImage?.alt}
               className="viewer-reference-image"
             />
+            {disableInteractive3D ? (
+              <div className="viewer-mobile-note">
+                {lang === 'it' ? 'Vista 3D non disponibile nel browser MetaMask iPhone.' : '3D view unavailable in the MetaMask iPhone browser.'}
+              </div>
+            ) : null}
           </div>
         ) : (
           <Canvas
