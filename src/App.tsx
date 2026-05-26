@@ -1145,54 +1145,43 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
-        {useLiteStore ? (
-          <div className="store-mobile-fallback">
-            <img src="/5.png" alt="Demetra mobile store preview" className="store-mobile-fallback-image" />
-            <p className="store-mobile-fallback-note">
-              {lang === 'it'
-                ? 'Browser MetaMask iPhone: store alleggerito per mantenere apertura pagina e acquisto NFT stabili.'
-                : 'MetaMask iPhone browser: lighter store mode to keep page loading and NFT purchases stable.'}
-            </p>
-            <div className="store-mobile-fallback-grid">
-              {SHOES.map((shoe) => (
-                <button key={shoe.id} type="button" className="store-mobile-fallback-button" onClick={() => onSelect(shoe.id)}>
-                  {shoe.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <Canvas
-            key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
-            camera={
-              isPhoneViewport
+        <Canvas
+          key={useLiteStore ? 'store-metamask-mobile' : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+          camera={
+            useLiteStore
+              ? { position: [4.45, 4.15, 5.8], fov: 30 }
+              : isPhoneViewport
                 ? { position: [4.1, 4, 5.25], fov: 30 }
                 : { position: [4.4, 4.05, 5.55], fov: 30 }
-            }
-            dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <color attach="background" args={['#090909']} />
-            <ambientLight intensity={0.88} />
-            <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
-            <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
-            <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
-              <StoreModel />
-              <ShelfShoes
-                activeShoeId={activeShoeId}
-                onHover={setActiveShoeId}
-                onLeave={() => setActiveShoeId(null)}
-                onSelect={onSelect}
-              />
-            </group>
-            <OrbitControls
-              enablePan={false}
-              enableZoom={false}
-              minDistance={4}
-              maxDistance={7}
-              minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
-              maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
+          }
+          dpr={useLiteStore ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
+          frameloop={useLiteStore ? 'demand' : 'always'}
+          gl={useLiteStore ? { antialias: false, powerPreference: 'low-power' } : undefined}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <color attach="background" args={['#090909']} />
+          <ambientLight intensity={useLiteStore ? 0.8 : 0.88} />
+          <directionalLight position={[8, 10, 6]} intensity={useLiteStore ? 1.5 : 2} color="#d0c5ff" />
+          <directionalLight position={[-6, 8, -3]} intensity={useLiteStore ? 0.8 : 1.1} color="#5b78ff" />
+          <group position={[0, 0.05, 0]} scale={useLiteStore ? 3.05 : isPhoneViewport ? 3.4 : 2.92}>
+            <StoreModel />
+            <ShelfShoes
+              activeShoeId={activeShoeId}
+              onHover={setActiveShoeId}
+              onLeave={() => setActiveShoeId(null)}
+              onSelect={onSelect}
             />
+          </group>
+          <OrbitControls
+            enablePan={false}
+            enableZoom={false}
+            enableRotate={!useLiteStore || !isPhoneViewport}
+            minDistance={4}
+            maxDistance={7}
+            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
+          />
+          {useLiteStore ? null : (
             <ContactShadows
               position={[0, -3.1, 0]}
               opacity={0.35}
@@ -1201,9 +1190,9 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
               far={6}
               color="#382f66"
             />
-            <Preload all />
-          </Canvas>
-        )}
+          )}
+          {useLiteStore ? null : <Preload all />}
+        </Canvas>
       </section>
 
       <SiteFooter lang={lang} />
