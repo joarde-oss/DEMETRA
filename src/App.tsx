@@ -1523,7 +1523,7 @@ function ShoeDetail({
             className="viewer-toggle-button"
             onClick={() => setShowReferenceImage((current) => !current)}
           >
-            {showReferenceImage ? (lang === 'it' ? 'Vedi 3D' : 'View 3D') : lang === 'it' ? 'Vedi Immagine' : 'View Image'}
+            {showReferenceImage ? (lang === 'it' ? 'Vedi 3D' : 'View 3D') : lang === 'it' ? 'Immagine' : 'Image'}
           </button>
         ) : null}
         {showReferenceImage && canShowReferenceImage ? (
