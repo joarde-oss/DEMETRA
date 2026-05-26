@@ -284,6 +284,14 @@ function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function isMetaMaskMobileBrowser() {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  return /MetaMaskMobile/i.test(navigator.userAgent);
+}
+
 const WALLET_SESSION_KEY = 'demetra.wallet.connected';
 const SEPOLIA_CHAIN_ID = 11155111n;
 const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
@@ -1075,6 +1083,7 @@ function ShelfShoes({
 
 function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) => void }) {
   const [activeShoeId, setActiveShoeId] = useState<ShoeId | null>(null);
+  const [diagnosticStep, setDiagnosticStep] = useState(1);
   const [isPhoneViewport, setIsPhoneViewport] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -1106,6 +1115,14 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
   }, []);
 
   const activeShoe = activeShoeId ? SHOES.find((shoe) => shoe.id === activeShoeId) ?? null : null;
+  const useMetaMaskDiagnostic = isPhoneViewport && isMetaMaskMobileBrowser();
+  const showRoom = !useMetaMaskDiagnostic || diagnosticStep >= 3;
+  const showShadows = !useMetaMaskDiagnostic || diagnosticStep >= 4;
+  const showShoes = !useMetaMaskDiagnostic || diagnosticStep >= 5;
+  const showControls = !useMetaMaskDiagnostic || diagnosticStep >= 6;
+  const diagnosticLabels = lang === 'it'
+    ? ['Canvas', 'Luci', 'Room', 'Ombre', 'Scarpe', 'Controlli']
+    : ['Canvas', 'Lights', 'Room', 'Shadows', 'Shoes', 'Controls'];
 
   return (
     <main className="store-page">
@@ -1131,53 +1148,105 @@ function StorePage({ lang, onSelect }: { lang: Lang; onSelect: (shoeId: ShoeId) 
       <section className="store-scene store-scene-reimagined" aria-label="3D Demetra store">
         <div className="store-overlay">
           <span>{lang === 'it' ? 'Store 3D' : '3D Store'}</span>
-          <p>{activeShoe ? (lang === 'it' ? `Apri i dettagli NFT di ${activeShoe.name}` : `Open ${activeShoe.name} NFT details`) : lang === 'it' ? 'Passa sopra una sneaker e clicca per vedere il suo NFT numerato.' : 'Hover a sneaker and click to inspect its numbered NFT.'}</p>
+          <p>
+            {useMetaMaskDiagnostic
+              ? lang === 'it'
+                ? `Modalita diagnostica MetaMask iPhone: step ${diagnosticStep}/6.`
+                : `MetaMask iPhone diagnostic mode: step ${diagnosticStep}/6.`
+              : activeShoe
+                ? (lang === 'it' ? `Apri i dettagli NFT di ${activeShoe.name}` : `Open ${activeShoe.name} NFT details`)
+                : lang === 'it'
+                  ? 'Passa sopra una sneaker e clicca per vedere il suo NFT numerato.'
+                  : 'Hover a sneaker and click to inspect its numbered NFT.'}
+          </p>
         </div>
+        {useMetaMaskDiagnostic ? (
+          <div className="store-diagnostic-panel">
+            <strong>{lang === 'it' ? 'Test MetaMask iPhone' : 'MetaMask iPhone Test'}</strong>
+            <div className="store-diagnostic-actions">
+              {diagnosticLabels.map((label, index) => {
+                const step = index + 1;
+
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    className={diagnosticStep === step ? 'store-diagnostic-button is-active' : 'store-diagnostic-button'}
+                    onClick={() => setDiagnosticStep(step)}
+                  >
+                    {step}. {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="store-scene-frame frame-top-left" aria-hidden="true" />
         <div className="store-scene-frame frame-bottom-right" aria-hidden="true" />
         <Canvas
-          key={isPhoneViewport ? 'store-mobile' : 'store-desktop'}
+          key={useMetaMaskDiagnostic ? `store-metamask-step-${diagnosticStep}` : isPhoneViewport ? 'store-mobile' : 'store-desktop'}
           camera={
             isPhoneViewport
               ? { position: [4.1, 4, 5.25], fov: 30 }
               : { position: [4.4, 4.05, 5.55], fov: 30 }
           }
-          dpr={isPhoneViewport ? [1, 1.5] : [1, 2]}
+          dpr={useMetaMaskDiagnostic ? 1 : isPhoneViewport ? [1, 1.5] : [1, 2]}
           frameloop="always"
+          gl={
+            useMetaMaskDiagnostic
+              ? {
+                  antialias: false,
+                  alpha: false,
+                  powerPreference: 'low-power',
+                  stencil: false,
+                  preserveDrawingBuffer: false
+                }
+              : undefined
+          }
           style={{ width: '100%', height: '100%' }}
         >
           <color attach="background" args={['#090909']} />
-          <ambientLight intensity={0.88} />
-          <directionalLight position={[8, 10, 6]} intensity={2} color="#d0c5ff" />
-          <directionalLight position={[-6, 8, -3]} intensity={1.1} color="#5b78ff" />
+          <ambientLight intensity={useMetaMaskDiagnostic ? 0.78 : 0.88} />
+          {(!useMetaMaskDiagnostic || diagnosticStep >= 2) ? (
+            <>
+              <directionalLight position={[8, 10, 6]} intensity={useMetaMaskDiagnostic ? 1.1 : 2} color="#d0c5ff" />
+              <directionalLight position={[-6, 8, -3]} intensity={useMetaMaskDiagnostic ? 0.7 : 1.1} color="#5b78ff" />
+            </>
+          ) : null}
           <group position={[0, 0.05, 0]} scale={isPhoneViewport ? 3.4 : 2.92}>
-            <StoreModel />
-            <ShelfShoes
-              activeShoeId={activeShoeId}
-              onHover={setActiveShoeId}
-              onLeave={() => setActiveShoeId(null)}
-              onSelect={onSelect}
-            />
+            {showRoom ? <StoreModel /> : null}
+            {showShoes ? (
+              <ShelfShoes
+                activeShoeId={activeShoeId}
+                onHover={setActiveShoeId}
+                onLeave={() => setActiveShoeId(null)}
+                onSelect={onSelect}
+              />
+            ) : null}
           </group>
-          <OrbitControls
-            enablePan={false}
-            enableZoom={false}
-            enableRotate
-            minDistance={4}
-            maxDistance={7}
-            minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
-            maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
-          />
-          <ContactShadows
-            position={[0, -3.1, 0]}
-            opacity={0.35}
-            scale={25}
-            blur={2.5}
-            far={6}
-            color="#382f66"
-          />
-          <Preload all />
+          {showControls ? (
+            <OrbitControls
+              enablePan={false}
+              enableZoom={false}
+              enableRotate
+              minDistance={4}
+              maxDistance={7}
+              minPolarAngle={isPhoneViewport ? 1.02 : 0.95}
+              maxPolarAngle={isPhoneViewport ? 1.28 : 1.35}
+            />
+          ) : null}
+          {showShadows ? (
+            <ContactShadows
+              position={[0, -3.1, 0]}
+              opacity={0.35}
+              scale={25}
+              blur={2.5}
+              far={6}
+              color="#382f66"
+            />
+          ) : null}
+          {!useMetaMaskDiagnostic ? <Preload all /> : null}
         </Canvas>
       </section>
 
